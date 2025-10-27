@@ -131,7 +131,7 @@ class SteamScraper:
     def _game_exists(self, app_id: int) -> bool:
         """Check if game data file already exists (valid or trash)"""
         valid_filepath = Path("data/games") / f"{app_id}.json"
-        trash_filepath = Path("data/games") / f"{app_id}-trash.json"
+        trash_filepath = Path("data/games/trash") / f"{app_id}-trash.json"
         return valid_filepath.exists() or trash_filepath.exists()
 
     def save_game_data(self, game_data: Dict[str, Any]):
@@ -149,10 +149,10 @@ class SteamScraper:
 
     def save_trash_file(self, app_id: int):
         """Save a minimal skeleton file for trash data"""
-        data_dir = Path("data/games")
-        data_dir.mkdir(parents=True, exist_ok=True)
+        trash_dir = Path("data/games/trash")
+        trash_dir.mkdir(parents=True, exist_ok=True)
 
-        filepath = data_dir / f"{app_id}-trash.json"
+        filepath = trash_dir / f"{app_id}-trash.json"
         trash_data = {
             "version": self.VERSION,
             "app_id": app_id,

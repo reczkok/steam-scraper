@@ -2,29 +2,35 @@
 
 Scrapes game data from Steam store pages and saves it as individual JSON files.
 
+## Setup
+
+```bash
+uv sync
+```
+
 ## Usage
 
 ```bash
-python main.py <app_id1> [app_id2] [app_id3] ...
+uv run main.py <app_id1> [app_id2] [app_id3] ...
 ```
 
 ### Example
 
 ```bash
 # Scrape single game
-python main.py 730
+uv run main.py 730
 
 # Scrape multiple games
-python main.py 730 440 570
+uv run main.py 730 440 570
 
 # Scrape range
-python main.py {1..100}
+uv run main.py {1..100}
 ```
 
 ## Output
 
 - Valid game data: `data/games/{app_id}.json`
-- Invalid/junk data: `data/games/{app_id}-trash.json`
+- Invalid/junk data: `data/games/trash/{app_id}-trash.json`
 
 Each file includes:
 - version
