@@ -10,8 +10,8 @@ from steamscraper import SteamScraper
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python main.py <app_id1> [app_id2] [app_id3] ...")
-        print("Example: python main.py 730 440 570")
+        print("Usage: uv run main.py <app_id1> [app_id2] [app_id3] ...")
+        print("Example: uv run main.py 730 440 570")
         return
 
     try:
@@ -20,7 +20,7 @@ def main():
         print("Error: All arguments must be valid Steam app IDs (integers)")
         return
 
-    scraper = SteamScraper(delay=0.1)
+    scraper = SteamScraper(delay=0.1, debug=False)
 
     print(f"Starting to scrape {len(app_ids)} games...")
     result = scraper.scrape_multiple(app_ids)
