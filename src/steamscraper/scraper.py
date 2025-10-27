@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 import time
 import json
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 from pathlib import Path
 
 
@@ -28,17 +28,19 @@ class SteamScraper:
         except requests.RequestException:
             return None
 
-    def scrape_game(self, app_id: int) -> Optional[Dict[str, Any]]:
+    def scrape_game(
+        self, app_id: int
+    ) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
         html = self.get_game_html(app_id)
         if not html:
-            return None
+            return None, "Failed to fetch HTML"
 
         soup = BeautifulSoup(html, "lxml")
 
         if self._is_blocked(soup):
-            return None
+            return None, "Age gate or error page detected"
 
-        return {
+        game_data = {
             "version": self.VERSION,
             "app_id": app_id,
             "url": f"{self.BASE_URL}/app/{app_id}/",
@@ -56,8 +58,10 @@ class SteamScraper:
             "html": html,
         }
 
-    def _is_junk_data(self, game_data: Dict[str, Any]) -> bool:
-        """Check if game data is junk (missing critical fields)"""
+        return game_data, None
+
+    def _is_valid_game_data(self, game_data: Dict[str, Any]) -> bool:
+        """Check if game data contains all required fields (not null/empty)"""
         required_fields = [
             "title",
             "price",
@@ -71,15 +75,10 @@ class SteamScraper:
 
         for field in required_fields:
             value = game_data.get(field)
-            # Check if field is None, empty string, or empty list
-            if (
-                value is None
-                or value == ""
-                or (isinstance(value, list) and len(value) == 0)
-            ):
-                return True
-
-        return False
+            # Check if value is None or empty (for strings and lists)
+            if value is None or (isinstance(value, (str, list)) and len(value) == 0):
+                return False
+        return True
 
     def scrape_multiple(self, app_ids: List[int]) -> Dict[str, Any]:
         results = []
@@ -89,6 +88,7 @@ class SteamScraper:
             "skipped": 0,
             "failed": 0,
             "trash": 0,
+            "total_fetched": 0,
         }
 
         for idx, app_id in enumerate(app_ids, 1):
@@ -96,36 +96,43 @@ class SteamScraper:
             if self._game_exists(app_id):
                 print(f"Skipping {app_id} (already have data)")
                 stats["skipped"] += 1
-            else:
-                print(f"Scraping {app_id}...")
-                game_data = self.scrape_game(app_id)
-                if game_data:
-                    if self._is_junk_data(game_data):
-                        print("  -> Trash data detected")
-                        self.save_trash_file(app_id)
-                        stats["trash"] += 1
-                    else:
-                        results.append(game_data)
-                        self.save_game_data(game_data)
-                        stats["succeeded"] += 1
-                else:
-                    stats["failed"] += 1
+                continue
 
-            # Print summary every 50 games processed
-            if idx % 50 == 0:
-                self._print_progress_summary(idx, stats)
+            print(f"Scraping {app_id}...")
+            game_data, error_reason = self.scrape_game(app_id)
+
+            if game_data:
+                if self._is_valid_game_data(game_data):
+                    results.append(game_data)
+                    self.save_game_data(game_data)
+                    stats["succeeded"] += 1
+                    print("  ✓ Valid data saved")
+                else:
+                    self.save_trash_marker(app_id)
+                    stats["trash"] += 1
+                    print("  ✗ Data is incomplete/junk - marked as trash")
+            else:
+                stats["failed"] += 1
+                print(f"  ✗ Failed: {error_reason}")
+
+            stats["total_fetched"] += 1
+
+            # Print summary every 50 fetched pages
+            if stats["total_fetched"] % 50 == 0:
+                self._print_progress_summary(stats)
 
         return {"games": results, "stats": stats}
 
-    def _print_progress_summary(self, processed: int, stats: Dict[str, int]):
-        """Print progress summary every 50 games"""
+    def _print_progress_summary(self, stats: Dict[str, Any]):
+        """Print progress summary"""
         print("\n" + "=" * 60)
-        print(f"PROGRESS SUMMARY - {processed}/{stats['requested']} games processed")
+        print("PROGRESS SUMMARY")
         print("=" * 60)
-        print(f"Succeeded: {stats['succeeded']}")
-        print(f"Skipped:   {stats['skipped']}")
-        print(f"Trash:     {stats['trash']}")
-        print(f"Failed:    {stats['failed']}")
+        print(f"Total Fetched:  {stats['total_fetched']}")
+        print(f"Succeeded:      {stats['succeeded']}")
+        print(f"Trash:          {stats['trash']}")
+        print(f"Failed:         {stats['failed']}")
+        print(f"Skipped:        {stats['skipped']}")
         print("=" * 60 + "\n")
 
     def _game_exists(self, app_id: int) -> bool:
@@ -147,18 +154,19 @@ class SteamScraper:
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(game_data, f, indent=2, ensure_ascii=False, default=str)
 
-    def save_trash_file(self, app_id: int):
-        """Save a minimal skeleton file for trash data"""
-        trash_dir = Path("data/games/trash")
-        trash_dir.mkdir(parents=True, exist_ok=True)
+    def save_trash_marker(self, app_id: int):
+        """Save a minimal trash marker file to avoid re-fetching"""
+        data_dir = Path("data/games/trash")
+        data_dir.mkdir(parents=True, exist_ok=True)
 
-        filepath = trash_dir / f"{app_id}-trash.json"
+        filepath = data_dir / f"{app_id}-trash.json"
         trash_data = {
             "version": self.VERSION,
             "app_id": app_id,
             "status": "trash",
-            "scraped_at": time.time(),
+            "marked_at": time.time(),
         }
+
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(trash_data, f, indent=2, ensure_ascii=False, default=str)
 

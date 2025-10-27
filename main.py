@@ -20,7 +20,7 @@ def main():
         print("Error: All arguments must be valid Steam app IDs (integers)")
         return
 
-    scraper = SteamScraper(delay=1.0)
+    scraper = SteamScraper(delay=0.1)
 
     print(f"Starting to scrape {len(app_ids)} games...")
     result = scraper.scrape_multiple(app_ids)
