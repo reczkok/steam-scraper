@@ -14,3 +14,5 @@ data/
 
 # MacOS files
 .DS_Store
+
+classificators/
