@@ -1,3 +1,7 @@
+# Best classifier can be found in best_classifier_final.ipynb file.
+
+
+
 # Steam Games Scraper
 
 Scrapes game data from Steam store pages and saves it as individual JSON files.
