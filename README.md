@@ -9,6 +9,7 @@ Pełny zbiór danych (wersja v2): [Link do games_slim.zip](https://drive.google.
 ## Przykłady struktur danych
 
 ### Wersja V1 (originalna oscrapowana)
+```json
 {
   "version": "1.0",
   "app_id": 2000000,
@@ -43,6 +44,7 @@ Pełny zbiór danych (wersja v2): [Link do games_slim.zip](https://drive.google.
   "scraped_at": 1761597936.3207831,
   "html": "<!DOCTYPE html>\n<html class=\"......"
 }
+```
 
 ### Wersja V2 (Slim)
 Zalecana wersja do analizy. Zawiera ustrukturyzowane dane techniczne i oceny.
@@ -72,10 +74,17 @@ Zalecana wersja do analizy. Zawiera ustrukturyzowane dane techniczne i oceny.
     "review_count": 86,
     "review_score": 79.0
 }
+```
 
 ## Unified Maturity Labels (oryginalnie utworzone z danych z PEGI i ESRB)
 Zunifikowane etykiety ograniczeń wiekowych i opisów treści.
+Wszystkie etykiety znajdują się w plikach: 
+unified_maturity_labels.json - pegi + esrb
+unified_mature_content_pegi_esrb_steam.json - pegi + esrb + steam
 
+Przykłady:
+
+```json
 {
   "10": {
     "tier": 3,
@@ -95,7 +104,7 @@ Zunifikowane etykiety ograniczeń wiekowych i opisów treści.
     "found_title": "Day of Defeat"
   }
 }
-
+```
 
 
 # Steam Games Scraper Instructions for development
