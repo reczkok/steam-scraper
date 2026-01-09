@@ -11,3 +11,8 @@ wheels/
 
 # Data
 data/
+
+# MacOS files
+.DS_Store
+
+classificators/
